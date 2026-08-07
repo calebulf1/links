@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Opening Amazon…</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F5F1E8;color:#1F1E1C;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+  .card{text-align:center;padding:32px}
+  .spin{width:28px;height:28px;margin:0 auto 16px;border:3px solid #D8D1BC;border-top-color:#3E9B6A;border-radius:50%;animation:r .8s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+  p{margin:0 0 12px;color:#5A574F}
+  a{color:#2B7C55;font-weight:600}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="spin"></div>
+  <p>Opening Amazon…</p>
+  <p><a id="fallback" href="#">Tap here if nothing happens</a></p>
+</div>
+<script>
+  var WEB="https://www.amazon.com/shop/calebulf/list/25WX6H9WP9P1Z?linkCode=spc&tag=calebulf-20&domainId=influencer&asc_contentid=amzn1.ideas.25WX6H9WP9P1Z";
+  var APP="com.amazon.mobile.shopping.web://amazon.com/shop/calebulf/list/25WX6H9WP9P1Z?linkCode=spc&tag=calebulf-20&domainId=influencer&asc_contentid=amzn1.ideas.25WX6H9WP9P1Z";
+  document.getElementById("fallback").href=WEB;
+  var isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if(isMobile){
+    var t=setTimeout(function(){location.href=WEB},1600);
+    document.addEventListener("visibilitychange",function(){if(document.hidden)clearTimeout(t)});
+    location.href=APP;
+  }else{
+    location.href=WEB;
+  }
+</script>
+</body>
+</html>
