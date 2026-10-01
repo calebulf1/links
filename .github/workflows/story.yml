@@ -1,0 +1,57 @@
+name: story-link
+# Whenever a story slot file is written (by the Shortcut or the Claude app), expand any short link
+# into the full amazon.com URL, clean tracking, force the affiliate tag, and commit it back.
+on:
+  push:
+    paths:
+      - "story/*/current.json"
+  repository_dispatch:
+    types: [story]
+permissions:
+  contents: write
+concurrency: story-link
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Normalize slot files
+        env:
+          DISPATCH_SLOT: ${{ github.event.client_payload.slot }}
+          DISPATCH_URL: ${{ github.event.client_payload.url }}
+        run: |
+          set -e
+          UA='Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+          if [ -n "$DISPATCH_SLOT" ]; then
+            mkdir -p "story/$DISPATCH_SLOT"
+            printf '{"url":"%s","set_at":%s}\n' "$(echo "$DISPATCH_URL" | grep -oE 'https?://[^ "]+' | head -1)" "$(date +%s)" > "story/$DISPATCH_SLOT/current.json"
+          fi
+          changed=0
+          for f in story/*/current.json; do
+            raw=$(python3 -c "import json,sys;print(json.load(open('$f')).get('url',''))" 2>/dev/null || true)
+            [ -z "$raw" ] && continue
+            case "$raw" in
+              https://www.amazon.com/*\?tag=calebulf-20) continue ;;   # already normalized
+            esac
+            final=$(curl -Ls -o /dev/null -w '%{url_effective}' -A "$UA" "$raw" || true)
+            case "$final" in https://*amazon.com/*) ;; *) echo "skip $f: $raw -> $final"; continue ;; esac
+            clean=$(python3 - "$final" <<'PY'
+          import sys
+          from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
+          u = urlsplit(sys.argv[1])
+          keep = {k: v for k, v in parse_qsl(u.query) if k in ("linkCode", "domainId", "asc_contentid")}
+          keep["tag"] = "calebulf-20"
+          print(urlunsplit(("https", "www.amazon.com", u.path, urlencode(keep), "")))
+          PY
+          )
+            printf '{"url":"%s","set_at":%s}\n' "$clean" "$(date +%s)" > "$f"
+            echo "$f: $raw -> $clean"
+            changed=1
+          done
+          if [ "$changed" = 1 ]; then
+            git config user.name "story-bot"
+            git config user.email "story-bot@users.noreply.github.com"
+            git add story/*/current.json
+            git commit -m "story: normalize slot links"
+            git push origin HEAD:main
+          fi
