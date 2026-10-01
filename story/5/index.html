@@ -26,6 +26,13 @@
   var TAG="calebulf-20", MAX_AGE_H=24;
   function go(raw){
     var u=new URL(raw);
+    if(/^(a\.co|amzn\.to|amzn\.com)$/i.test(u.host)){
+      // Amazon short link: the tag survives the redirect; the link itself opens the Amazon app on phones.
+      u.searchParams.set("tag",TAG);
+      document.getElementById("fallback").href=u.href;
+      location.href=u.href;
+      return;
+    }
     ["ref","ref_","social_share","th","psc","_encoding","pd_rd_r","pd_rd_w","pd_rd_wg","pf_rd_p","pf_rd_r","content-id"].forEach(function(k){u.searchParams.delete(k)});
     u.searchParams.set("tag",TAG);
     var WEB=u.href;
@@ -39,7 +46,7 @@
   }
   fetch("current.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){
     var ageH=(Date.now()/1000-(d.set_at||0))/3600;
-    if(!d.url||!/^https?:\/\/([a-z0-9-]+\.)*amazon\.com\//i.test(d.url)||ageH>MAX_AGE_H){
+    if(!d.url||!/^https?:\/\/(([a-z0-9-]+\.)*amazon\.com|a\.co|amzn\.to|amzn\.com)\//i.test(d.url)||ageH>MAX_AGE_H){
       document.querySelector(".card").innerHTML="<p>That story link has expired.</p><p><a href='https://www.amazon.com/shop/calebulf?tag=calebulf-20'>See everything I recommend on Amazon</a></p>";
       return;
     }
