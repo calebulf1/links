@@ -31,7 +31,7 @@ jobs:
             raw=$(python3 -c "import json,sys;print(json.load(open('$f')).get('url',''))" 2>/dev/null || true)
             [ -z "$raw" ] && continue
             case "$raw" in
-              https://www.amazon.com/*\?tag=calebulf-20) continue ;;   # already normalized
+              https://www.amazon.com/*\?tag=calebulf-20) case "$raw" in */ref=*) ;; *) continue ;; esac ;;   # already normalized
             esac
             final=$(curl -Ls -o /dev/null -w '%{url_effective}' -A "$UA" "$raw" || true)
             case "$final" in https://*amazon.com/*) ;; *) echo "skip $f: $raw -> $final"; continue ;; esac
@@ -39,9 +39,11 @@ jobs:
           import sys
           from urllib.parse import urlsplit, parse_qsl, urlencode, urlunsplit
           u = urlsplit(sys.argv[1])
+          import re
+          path = re.sub(r"/ref=[^/]*$", "", u.path)
           keep = {k: v for k, v in parse_qsl(u.query) if k in ("linkCode", "domainId", "asc_contentid")}
           keep["tag"] = "calebulf-20"
-          print(urlunsplit(("https", "www.amazon.com", u.path, urlencode(keep), "")))
+          print(urlunsplit(("https", "www.amazon.com", path, urlencode(keep), "")))
           PY
           )
             printf '{"url":"%s","set_at":%s}\n' "$clean" "$(date +%s)" > "$f"
