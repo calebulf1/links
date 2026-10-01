@@ -7,7 +7,7 @@ When Caleb sends an Amazon link and a slot number (e.g. "slot 2: https://a.co/d/
    `curl -Ls -o /dev/null -w '%{url_effective}' -A 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1' '<link>'`
 2. Build the deep link: keep only the amazon.com path (e.g. `https://www.amazon.com/dp/ASIN` or `/shop/calebulf/list/ID`), drop every tracking param, then append `?tag=calebulf-20`.
 3. Write `story/<slot>/current.json` as exactly: `{"url":"<deep link>","set_at":<unix seconds now>}`
-4. Commit and push to main. Reply with only the deep link and the slot page `https://calebulf1.github.io/links/story/<slot>/`. Nothing else.
+4. Commit and push to main. (A GitHub Action re-normalizes the file on push, so a raw short link also works if expansion fails.) Reply with only the deep link and the slot page `https://calebulf1.github.io/links/story/<slot>/`. Nothing else.
 
 Slots are 1-5. Slot pages add the Amazon app scheme and expire 24h after set_at. Never edit `story/<slot>/index.html` for a slot request.
 
