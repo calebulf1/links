@@ -27,10 +27,16 @@
   function go(raw){
     var u=new URL(raw);
     if(/^(a\.co|amzn\.to|amzn\.com)$/i.test(u.host)){
-      // Amazon short link: the tag survives the redirect; the link itself opens the Amazon app on phones.
+      // Amazon short link: keep it as-is (tag survives the redirect) but open it through the Amazon app scheme,
+      // same as the episode pages. Web fallback if the app is not installed.
       u.searchParams.set("tag",TAG);
-      document.getElementById("fallback").href=u.href;
-      location.href=u.href;
+      var SWEB=u.href, SAPP="com.amazon.mobile.shopping.web://"+u.host+u.pathname+u.search;
+      document.getElementById("fallback").href=SWEB;
+      if(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){
+        var st=setTimeout(function(){location.href=SWEB},1600);
+        document.addEventListener("visibilitychange",function(){if(document.hidden)clearTimeout(st)});
+        location.href=SAPP;
+      }else{location.href=SWEB}
       return;
     }
     ["ref","ref_","social_share","th","psc","_encoding","pd_rd_r","pd_rd_w","pd_rd_wg","pf_rd_p","pf_rd_r","content-id"].forEach(function(k){u.searchParams.delete(k)});
