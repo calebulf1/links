@@ -44,8 +44,10 @@
       location.href=APP;
     }else{location.href=WEB}
   }
-  fetch("current.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){
-    var ageH=(Date.now()/1000-(d.set_at||0))/3600;
+  var lastMod=NaN;
+  fetch("current.json?t="+Date.now(),{cache:"no-store"}).then(function(r){lastMod=Date.parse(r.headers.get("last-modified")||"");return r.json()}).then(function(d){
+    var setAt=typeof d.set_at==="number"?d.set_at*1000:Date.parse(d.set_at||"");
+    if(isNaN(setAt))setAt=lastMod;var ageH=isNaN(setAt)?1e9:(Date.now()-setAt)/3600000;
     if(!d.url||!/^https?:\/\/(([a-z0-9-]+\.)*amazon\.com|a\.co|amzn\.to|amzn\.com)\//i.test(d.url)||ageH>MAX_AGE_H){
       document.querySelector(".card").innerHTML="<p>That story link has expired.</p><p><a href='https://www.amazon.com/shop/calebulf?tag=calebulf-20'>See everything I recommend on Amazon</a></p>";
       return;
